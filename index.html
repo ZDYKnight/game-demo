@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Star Universal — Dragon vs Comets</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            color: #e6f1ff;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #hud {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 10;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(6px);
+            background: rgba(10, 15, 24, 0.35);
+            border: 1px solid rgba(120, 180, 255, 0.18);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .title {
+            font-weight: 700;
+            letter-spacing: .4px;
+            color: #9fd1ff;
+        }
+
+        .stat {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .bar {
+            width: 150px;
+            height: 10px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bar>div {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #28e0b9, #1fa4ff);
+        }
+
+        .bar.hp>div {
+            background: linear-gradient(90deg, #ff4d6d, #ffa94d);
+        }
+
+        .bar.fs>div {
+            background: linear-gradient(90deg, #b28dff, #6c2eff);
+        }
+
+        #help {
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            z-index: 10;
+            font-size: 12px;
+            color: #9fb6d1;
+            background: rgba(7, 12, 20, 0.35);
+            border: 1px solid rgba(120, 180, 255, 0.15);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        #centerReticle {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9fd1ff;
+            box-shadow: 0 0 10px #4bbcff;
+            opacity: .65;
+            z-index: 5;
+        }
+
+        #prompt,
+        #pause,
+        #gameover {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            z-index: 20;
+            pointer-events: none;
+            transition: opacity .35s ease;
+            opacity: 0;
+        }
+
+        .visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .card {
+            width: min(560px, 90vw);
+            padding: 18px 20px;
+            border-radius: 14px;
+            color: #d8e6ff;
+            background: linear-gradient(180deg, rgba(20, 28, 40, 0.72), rgba(8, 12, 20, 0.85));
+            border: 1px solid rgba(130, 180, 255, 0.22);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .card h1,
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 18px;
+            color: #a7d0ff;
+        }
+
+        .card p {
+            margin: 6px 0;
+            font-size: 13px;
+            color: #bcd0e6;
+        }
+
+        .card button {
+            margin-top: 12px;
+            padding: 10px 14px;
+            font-size: 13px;
+            border-radius: 10px;
+            border: 1px solid rgba(140, 200, 255, 0.35);
+            background: linear-gradient(180deg, #152235, #0b1422);
+            color: #d8ebff;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+        }
+
+        .card button:hover {
+            filter: brightness(1.15);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="hud">
+        <div class="title">STAR UNIVERSAL — Dragon vs Comets</div>
+        <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">Wave: <span id="wave">1</span></div>
+        <div class="stat">HP: <div class="bar hp">
+                <div id="hpBar"></div>
+            </div>
+        </div>
+        <div class="stat">Final Skill: <div class="bar fs">
+                <div id="fsBar"></div>
+            </div>
+        </div>
+        <div class="stat">State: <span id="state">Ready</span></div>
+    </div>
+    <div id="help">
+        <div><strong>Controls</strong></div>
+        <div>Mouse: Aim • Left Click: Shoot • F: Final Skill • Shift: Boost • P: Pause</div>
+        <div>W/A/S/D or Arrows: Move • Space: Stabilize</div>
+    </div>
+    <div id="centerReticle"></div>
+
+    <div id="prompt" class="visible">
+        <div class="card">
+            <h1>Welcome to Star Universal</h1>
+            <p>Control a luminous space dragon, evade homing comets, and fight monsters. Time your final skill to turn
+                the tide.</p>
+            <button id="startBtn">Start Game</button>
+        </div>
+    </div>
+
+    <div id="pause">
+        <div class="card">
+            <h2>Paused</h2>
+            <p>Press P to resume.</p>
+            <button id="resumeBtn">Resume</button>
+        </div>
+    </div>
+
+    <div id="gameover">
+        <div class="card">
+            <h2>Game Over</h2>
+            <p>Your Score: <span id="finalScore">0</span> • Max Wave: <span id="finalWave">1</span></p>
+            <button id="restartBtn">Restart</button>
+        </div>
+    </div>
+
+    <!-- Three.js + postprocessing -->
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://unpkg.com/three@0.158.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script>
+        (() => {
+            // Basic state
+            let scene, camera, renderer, composer;
+            let dragon, dragonGroup, dragonVelocity = new THREE.Vector3(), dragonForward = new THREE.Vector3(0, 0, -1);
+            let stars, shots = [], monsters = [], comets = [], explosions = [], trails = [];
+            let clock = new THREE.Clock();
+            let running = false, paused = false;
+            let score = 0, wave = 1, hp = 100, finalSkillCharge = 0, fsCooldown = 0;
+            const limits = { world: 900, maxMonsters: 28, maxComets: 90, maxShots: 60 };
+            const difficulty = { monsterSpeed: 2.2, cometSpeed: 8.5, shotSpeed: 20.0, cometSpawnBase: 1.4 };
+
+            const ui = {
+                score: document.getElementById('score'),
+                wave: document.getElementById('wave'),
+                hpBar: document.getElementById('hpBar'),
+                fsBar: document.getElementById('fsBar'),
+                state: document.getElementById('state'),
+                startBtn: document.getElementById('startBtn'),
+                resumeBtn: document.getElementById('resumeBtn'),
+                restartBtn: document.getElementById('restartBtn'),
+                prompt: document.getElementById('prompt'),
+                pause: document.getElementById('pause'),
+                gameover: document.getElementById('gameover'),
+                finalScore: document.getElementById('finalScore'),
+                finalWave: document.getElementById('finalWave'),
+            };
+
+            // Input
+            const keys = {}; let mouse = new THREE.Vector2(0, 0); let clickHold = false;
+
+            function init() {
+                scene = new THREE.Scene();
+                scene.fog = new THREE.FogExp2(0x000010, 0.0006);
+
+                camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 5000);
+                camera.position.set(0, 8, 36);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+                renderer.outputColorSpace = THREE.SRGBColorSpace;
+                document.body.appendChild(renderer.domElement);
+
+                // Lights
+                const hemi = new THREE.HemisphereLight(0x8fd3ff, 0x101020, 0.9);
+                scene.add(hemi);
+                const key = new THREE.DirectionalLight(0xb9d7ff, 0.85);
+                key.position.set(80, 120, 60);
+                scene.add(key);
+                const rim = new THREE.PointLight(0x5a9bff, 12, 400);
+                rim.position.set(-40, 20, 10);
+                scene.add(rim);
+
+                // Postprocessing: render -> bloom
+                composer = new THREE.EffectComposer(renderer);
+                const renderPass = new THREE.RenderPass(scene, camera);
+                const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.9, 0.4, 0.85);
+                composer.addPass(renderPass);
+                composer.addPass(bloomPass);
+
+                // Background stars
+                buildStarfield();
+
+                // Dragon
+                dragonGroup = new THREE.Group();
+                dragon = buildDragon();
+                dragonGroup.add(dragon);
+                scene.add(dragonGroup);
+                dragonGroup.position.set(0, 0, 0);
+
+                // Spawn initial entities
+                for (let i = 0; i < 7; i++) spawnMonster();
+                for (let i = 0; i < 40; i++) spawnComet();
+
+                // Input bindings
+                window.addEventListener('resize', onResize);
+                window.addEventListener('keydown', (e) => { keys[e.code] = true; if (e.code === 'KeyP') togglePause(); if (e.code === 'KeyF') triggerFinalSkill(); });
+                window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+                window.addEventListener('mousemove', (e) => {
+                    const x = (e.clientX / window.innerWidth) * 2 - 1;
+                    const y = -(e.clientY / window.innerHeight) * 2 + 1;
+                    mouse.set(x, y);
+                });
+                window.addEventListener('mousedown', (e) => { if (e.button === 0) clickHold = true; });
+                window.addEventListener('mouseup', (e) => { if (e.button === 0) clickHold = false; });
+
+                // UI
+                ui.startBtn.addEventListener('click', () => start());
+                ui.resumeBtn.addEventListener('click', () => togglePause());
+                ui.restartBtn.addEventListener('click', () => { ui.gameover.classList.remove('visible'); resetGame(); start(); });
+            }
+
+            function buildStarfield() {
+                const starCount = 2400;
+                const positions = new Float32Array(starCount * 3);
+                for (let i = 0; i < starCount; i++) {
+                    const r = 1400 * Math.random() + 300;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = r * Math.cos(phi);
+                }
+                const geom = new THREE.BufferGeometry();
+                geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const mat = new THREE.PointsMaterial({ color: 0x9fd1ff, size: 2.0, sizeAttenuation: true, transparent: true, opacity: 0.85 });
+                stars = new THREE.Points(geom, mat);
+                scene.add(stars);
+            }
+
+            function buildDragon() {
+                const group = new THREE.Group();
+                const glowMat = new THREE.MeshStandardMaterial({ color: 0x3aa2ff, metalness: 0.35, roughness: 0.45, emissive: 0x0a1535, emissiveIntensity: 0.3 });
+                const body = new THREE.Mesh(new THREE.CapsuleGeometry(3.5, 8, 6, 16), glowMat);
+                body.rotation.x = Math.PI / 2;
+                group.add(body);
+
+                const head = new THREE.Mesh(new THREE.SphereGeometry(2.0, 18, 18), new THREE.MeshStandardMaterial({ color: 0x63d1ff, metalness: 0.3, roughness: 0.4, emissive: 0x102040, emissiveIntensity: 0.2 }));
+                head.position.set(0, 0, -6.8);
+                group.add(head);
+
+                const hornMat = new THREE.MeshStandardMaterial({ color: 0xb28dff, emissive: 0x4212ff, emissiveIntensity: 0.6 });
+                const horn = new THREE.ConeGeometry(0.5, 2.0, 12);
+                const hornL = new THREE.Mesh(horn, hornMat), hornR = new THREE.Mesh(horn, hornMat);
+                hornL.position.set(-1.0, 1.0, -7.6); hornR.position.set(1.0, 1.0, -7.6);
+                hornL.rotation.x = Math.PI * 0.1; hornR.rotation.x = Math.PI * 0.1;
+                group.add(hornL, hornR);
+
+                const wingMat = new THREE.MeshStandardMaterial({ color: 0x28e0b9, metalness: 0.2, roughness: 0.6, transparent: true, opacity: 0.65, side: THREE.DoubleSide });
+                const wingL = new THREE.Mesh(new THREE.PlaneGeometry(9, 4, 1, 1), wingMat);
+                const wingR = new THREE.Mesh(new THREE.PlaneGeometry(9, 4, 1, 1), wingMat);
+                wingL.position.set(-5.5, 0, -2); wingR.position.set(5.5, 0, -2);
+                wingL.rotation.y = Math.PI * 0.2; wingR.rotation.y = -Math.PI * 0.2;
+                group.add(wingL, wingR);
+
+                const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.2, 8, 12), new THREE.MeshStandardMaterial({ color: 0x1fa4ff, emissive: 0x0a1535, emissiveIntensity: 0.2 }));
+                tail.position.set(0, 0, 7); tail.rotation.x = Math.PI / 2;
+                group.add(tail);
+
+                const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.2, 8, 24), new THREE.MeshStandardMaterial({ color: 0xffa94d, emissive: 0xff4d6d, emissiveIntensity: 0.3 }));
+                mouth.position.set(0, -0.2, -8.7);
+                group.add(mouth);
+
+                // Soft glow trail (billboard quad)
+                const trailGeom = new THREE.PlaneGeometry(1.2, 10);
+                const trailMat = new THREE.MeshBasicMaterial({ color: 0x6ec2ff, transparent: true, opacity: 0.35 });
+                const trail = new THREE.Mesh(trailGeom, trailMat);
+                trail.position.set(0, 0, 4.5);
+                group.add(trail);
+
+                group.userData = { wingL, wingR, mouth, trail };
+                return group;
+            }
+
+            function onResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                composer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            function start() {
+                ui.prompt.classList.remove('visible');
+                running = true; paused = false;
+                ui.state.textContent = 'Playing';
+                animate();
+            }
+
+            function togglePause() {
+                if (!running) return;
+                paused = !paused;
+                ui.pause.classList.toggle('visible', paused);
+                ui.state.textContent = paused ? 'Paused' : 'Playing';
+                if (!paused) animate();
+            }
+
+            function resetGame() {
+                score = 0; wave = 1; hp = 100; finalSkillCharge = 0; fsCooldown = 0;
+                ui.score.textContent = score; ui.wave.textContent = wave;
+                ui.hpBar.style.width = hp + '%'; ui.fsBar.style.width = finalSkillCharge + '%';
+                // Clear entities
+                [...monsters, ...comets, ...shots, ...explosions, ...trails].forEach(e => e.mesh && scene.remove(e.mesh));
+                monsters = []; comets = []; shots = []; explosions = []; trails = [];
+                // Respawn
+                for (let i = 0; i < 7; i++) spawnMonster();
+                for (let i = 0; i < 40; i++) spawnComet();
+                dragonGroup.position.set(0, 0, 0); dragonVelocity.set(0, 0, 0); dragonForward.set(0, 0, -1);
+            }
+
+            // Entities
+            function spawnMonster() {
+                if (monsters.length >= limits.maxMonsters) return;
+                const body = new THREE.Mesh(new THREE.DodecahedronGeometry(2.6, 1),
+                    new THREE.MeshStandardMaterial({ color: 0xff6b6b, metalness: 0.2, roughness: 0.7, emissive: 0x3a0a0a, emissiveIntensity: 0.25 }));
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.6, 12, 12),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x9b0000, emissiveIntensity: 0.35 }));
+                eye.position.set(0.5, 0.5, -0.5);
+                const group = new THREE.Group(); group.add(body); group.add(eye);
+                const angle = Math.random() * Math.PI * 2; const radius = 260 + Math.random() * 240; const height = (Math.random() - 0.5) * 160;
+                group.position.set(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+                scene.add(group);
+                const speed = difficulty.monsterSpeed + Math.random() * 1.2;
+                const hpM = 6 + Math.floor(wave * 0.7);
+                monsters.push({ mesh: group, speed, hp: hpM, alive: true });
+            }
+
+            function spawnComet() {
+                if (comets.length >= limits.maxComets) return;
+                const cometGroup = new THREE.Group();
+                // Core (glow sphere)
+                const core = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x9fd1ff, emissive: 0x2a7cff, emissiveIntensity: 0.8, metalness: 0.0, roughness: 0.6 }));
+                // Tail (cone aligned to velocity)
+                const tail = new THREE.Mesh(new THREE.ConeGeometry(0.35, 4.5, 16),
+                    new THREE.MeshBasicMaterial({ color: 0x49a6ff, transparent: true, opacity: 0.55 }));
+                tail.rotation.x = Math.PI; tail.position.z = 2.3;
+                cometGroup.add(core); cometGroup.add(tail);
+
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 500 + Math.random() * 400;
+                const height = (Math.random() - 0.5) * 300;
+                cometGroup.position.set(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+
+                // Initial velocity points roughly toward dragon with noise
+                const toDragon = dragonGroup.position.clone().sub(cometGroup.position).normalize();
+                const noise = new THREE.Vector3((Math.random() - 0.5), (Math.random() - 0.5), (Math.random() - 0.5)).multiplyScalar(0.6);
+                const vel = toDragon.clone().add(noise).normalize().multiplyScalar(difficulty.cometSpeed * (0.8 + Math.random() * 0.6));
+
+                scene.add(cometGroup);
+                comets.push({ mesh: cometGroup, vel, alive: true, damage: 6 });
+            }
+
+            function spawnShot() {
+                if (shots.length >= limits.maxShots) return;
+                const geom = new THREE.CylinderGeometry(0.12, 0.12, 2.4, 10);
+                const mat = new THREE.MeshStandardMaterial({ color: 0xffd166, emissive: 0xff931f, emissiveIntensity: 1.0, roughness: 0.35 });
+                const mesh = new THREE.Mesh(geom, mat); mesh.rotation.x = Math.PI / 2;
+                const muzzle = dragonGroup.localToWorld(new THREE.Vector3(0, -0.2, -9.2));
+                mesh.position.copy(muzzle);
+                const dir = dragonForward.clone().normalize();
+                scene.add(mesh);
+                // Trail sprite
+                const trailGeom = new THREE.PlaneGeometry(0.6, 2.6);
+                const trailMat = new THREE.MeshBasicMaterial({ color: 0xffcf7a, transparent: true, opacity: 0.6 });
+                const trail = new THREE.Mesh(trailGeom, trailMat); trail.position.copy(mesh.position);
+                scene.add(trail);
+                shots.push({ mesh, dir, speed: difficulty.shotSpeed, ttl: 3.0, damage: 2, trail });
+            }
+
+            function spawnExplosion(position, power = 1.0) {
+                const geom = new THREE.SphereGeometry(0.5, 14, 14);
+                const mat = new THREE.MeshBasicMaterial({ color: 0xffedc0, transparent: true, opacity: 0.95 });
+                const mesh = new THREE.Mesh(geom, mat);
+                mesh.position.copy(position); scene.add(mesh);
+                explosions.push({ mesh, radius: 0.5, growth: 26 * power, fade: 1.2 * power, ttl: 0.25 * power });
+            }
+
+            // Systems
+            function triggerFinalSkill() {
+                if (finalSkillCharge < 100 || fsCooldown > 0 || paused) return;
+                const origin = dragonGroup.position.clone();
+                const blastRadius = 140 + wave * 12;
+                // Radial blast on monsters
+                for (const m of monsters) {
+                    const d = m.mesh.position.distanceTo(origin);
+                    if (d < blastRadius) {
+                        m.hp = 0; m.alive = false;
+                        spawnExplosion(m.mesh.position, 2.0);
+                        score += 24; ui.score.textContent = score;
+                    }
+                }
+                // Clear nearby comets
+                comets = comets.filter(c => {
+                    const keep = c.mesh.position.distanceTo(origin) > blastRadius * 0.6;
+                    if (!keep) scene.remove(c.mesh);
+                    return keep;
+                });
+                // Visual flash
+                spawnExplosion(origin, 3.2);
+                finalSkillCharge = 0; ui.fsBar.style.width = finalSkillCharge + '%';
+                fsCooldown = 4.0;
+            }
+
+            function updateDragon(dt) {
+                // Aim with mouse: rotate forward vector smoothly
+                const yaw = mouse.x * 0.9, pitch = mouse.y * 0.6;
+                const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw * dt);
+                const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch * dt);
+                dragonForward.applyQuaternion(qYaw.multiply(qPitch)).normalize();
+
+                // Move with WASD/arrows
+                const move = new THREE.Vector3();
+                const right = new THREE.Vector3().crossVectors(dragonForward, new THREE.Vector3(0, 1, 0)).normalize();
+                const up = new THREE.Vector3(0, 1, 0);
+                const speedBase = 16, boost = (keys['ShiftLeft'] || keys['ShiftRight']) ? 1.8 : 1.0;
+                if (keys['KeyW'] || keys['ArrowUp']) move.add(dragonForward);
+                if (keys['KeyS'] || keys['ArrowDown']) move.addScaledVector(dragonForward, -1);
+                if (keys['KeyA'] || keys['ArrowLeft']) move.addScaledVector(right, -1);
+                if (keys['KeyD'] || keys['ArrowRight']) move.add(right);
+                if (keys['Space']) dragonForward.lerp(new THREE.Vector3(0, 0, -1), dt * 0.7);
+                if (move.lengthSq() > 0) move.normalize();
+                const targetVel = move.multiplyScalar(speedBase * boost);
+                dragonVelocity.lerp(targetVel, dt * 6.0);
+                dragonGroup.position.addScaledVector(dragonVelocity, dt);
+
+                const clamp = limits.world * 0.9;
+                dragonGroup.position.x = THREE.MathUtils.clamp(dragonGroup.position.x, -clamp, clamp);
+                dragonGroup.position.y = THREE.MathUtils.clamp(dragonGroup.position.y, -clamp, clamp);
+                dragonGroup.position.z = THREE.MathUtils.clamp(dragonGroup.position.z, -clamp, clamp);
+
+                // Wing and trail animation
+                const t = performance.now() * 0.001, amp = 0.6 + (boost - 1.0);
+                const { wingL, wingR, mouth, trail } = dragon.userData;
+                wingL.rotation.z = Math.sin(t * 6.0) * 0.2 * amp;
+                wingR.rotation.z = -Math.sin(t * 6.0) * 0.2 * amp;
+                mouth.material.emissiveIntensity = 0.25 + (clickHold ? 0.9 : 0.35);
+                // stretch trail opposite to velocity
+                const trailLen = THREE.MathUtils.clamp(dragonVelocity.length() * 0.8, 0.6, 6.0);
+                trail.scale.set(1, trailLen, 1);
+                const backDir = dragonVelocity.length() > 0.01 ? dragonVelocity.clone().normalize() : new THREE.Vector3(0, 0, 1);
+                const trailLook = dragonGroup.position.clone().sub(backDir.clone().multiplyScalar(5));
+                trail.lookAt(trailLook);
+
+                // Camera follow with lag and look-ahead
+                const lookAhead = dragonForward.clone().multiplyScalar(12);
+                const camTarget = dragonGroup.position.clone().add(new THREE.Vector3(0, 8, 36)).add(lookAhead.clone().multiplyScalar(0.2));
+                camera.position.lerp(camTarget, dt * 4.0);
+                camera.lookAt(dragonGroup.position.clone().add(lookAhead));
+
+                // Shooting
+                if (clickHold) {
+                    spawnShot.cooldown = Math.max(0, (spawnShot.cooldown ?? 0) - dt);
+                    if (spawnShot.cooldown <= 0) { spawnShot(); spawnShot.cooldown = 0.11; }
+                }
+
+                // Final skill charge/cooldown
+                if (fsCooldown > 0) { fsCooldown -= dt; }
+                else { finalSkillCharge = Math.min(100, finalSkillCharge + dt * 9.0); ui.fsBar.style.width = finalSkillCharge + '%'; }
+            }
+
+            function updateMonsters(dt) {
+                // Spawn pacing
+                updateMonsters.spawnTimer = (updateMonsters.spawnTimer ?? 0) - dt;
+                if (updateMonsters.spawnTimer <= 0 && monsters.length < limits.maxMonsters) {
+                    spawnMonster();
+                    updateMonsters.spawnTimer = Math.max(0.7, 2.5 - wave * 0.05);
+                }
+                for (const m of monsters) {
+                    if (!m.alive) { scene.remove(m.mesh); continue; }
+                    const toDragon = dragonGroup.position.clone().sub(m.mesh.position).normalize();
+                    m.mesh.position.addScaledVector(toDragon, m.speed * dt);
+                    m.mesh.rotation.y += dt * 0.7;
+                    if (m.mesh.position.distanceTo(dragonGroup.position) < 4.0) {
+                        hp = Math.max(0, hp - 12); ui.hpBar.style.width = hp + '%';
+                        spawnExplosion(m.mesh.position, 1.2);
+                        m.hp = 0; m.alive = false; score += 5; ui.score.textContent = score;
+                        if (hp <= 0) endGame();
+                    }
+                }
+                const aliveCount = monsters.filter(m => m.alive).length;
+                if (aliveCount === 0) {
+                    wave++; ui.wave.textContent = wave;
+                    difficulty.monsterSpeed += 0.18; difficulty.cometSpeed += 0.12;
+                    for (let i = 0; i < Math.min(6 + wave, limits.maxMonsters); i++) spawnMonster();
+                    hp = Math.min(100, hp + 10); ui.hpBar.style.width = hp + '%';
+                }
+            }
+
+            function updateComets(dt) {
+                // Spawn pacing
+                updateComets.spawnTimer = (updateComets.spawnTimer ?? difficulty.cometSpawnBase) - dt;
+                if (updateComets.spawnTimer <= 0 && comets.length < limits.maxComets) {
+                    for (let i = 0; i < 3; i++) spawnComet();
+                    updateComets.spawnTimer = Math.max(0.5, difficulty.cometSpawnBase - (wave * 0.03));
+                }
+
+                for (const c of comets) {
+                    if (!c.alive) { scene.remove(c.mesh); continue; }
+                    // Homing adjust
+                    const desired = dragonGroup.position.clone().sub(c.mesh.position).normalize().multiplyScalar(difficulty.cometSpeed);
+                    c.vel.lerp(desired, dt * 0.9);
+                    c.mesh.position.addScaledVector(c.vel, dt);
+
+                    // Orient tail opposite velocity
+                    const lookBack = c.mesh.position.clone().sub(c.vel.clone().normalize().multiplyScalar(2));
+                    c.mesh.lookAt(lookBack);
+
+                    // Bounds wrap
+                    ['x', 'y', 'z'].forEach(axis => {
+                        const w = limits.world;
+                        if (c.mesh.position[axis] > w) c.mesh.position[axis] = -w;
+                        if (c.mesh.position[axis] < -w) c.mesh.position[axis] = w;
+                    });
+
+                    // Collision with dragon
+                    const d = c.mesh.position.distanceTo(dragonGroup.position);
+                    if (d < 2.0) {
+                        hp = Math.max(0, hp - c.damage); ui.hpBar.style.width = hp + '%';
+                        spawnExplosion(c.mesh.position, 0.9);
+                        c.alive = false; score += 1; ui.score.textContent = score;
+                        scene.remove(c.mesh);
+                        if (hp <= 0) endGame();
+                    }
+                }
+                comets = comets.filter(c => c.alive);
+            }
+
+            function updateShots(dt) {
+                for (const s of shots) {
+                    s.mesh.position.addScaledVector(s.dir, s.speed * dt);
+                    // Trail follows with fade
+                    s.trail.position.lerp(s.mesh.position.clone().add(new THREE.Vector3(0, 0, 1)), dt * 10.0);
+                    s.trail.lookAt(s.trail.position.clone().sub(s.dir));
+                    s.trail.material.opacity = Math.max(0, s.trail.material.opacity - dt * 0.8);
+                    s.ttl -= dt;
+                    if (s.ttl <= 0) {
+                        scene.remove(s.mesh); scene.remove(s.trail); s.dead = true; continue;
+                    }
+                    // Hit monsters
+                    for (const m of monsters) {
+                        if (!m.alive) continue;
+                        const d = s.mesh.position.distanceTo(m.mesh.position);
+                        if (d < 2.6) {
+                            m.hp -= s.damage; spawnExplosion(s.mesh.position, 0.65);
+                            scene.remove(s.mesh); scene.remove(s.trail); s.dead = true;
+                            score += 1; ui.score.textContent = score;
+                            if (m.hp <= 0) { m.alive = false; score += 6; ui.score.textContent = score; }
+                            break;
+                        }
+                    }
+                    // Hit comets
+                    for (const c of comets) {
+                        if (!c.alive) continue;
+                        const d = s.mesh.position.distanceTo(c.mesh.position);
+                        if (d < 1.6) {
+                            c.alive = false; spawnExplosion(c.mesh.position, 0.8);
+                            scene.remove(s.mesh); scene.remove(s.trail); s.dead = true;
+                            score += 2; ui.score.textContent = score;
+                            break;
+                        }
+                    }
+                }
+                shots = shots.filter(s => !s.dead);
+            }
+
+            function updateExplosions(dt) {
+                for (const ex of explosions) {
+                    ex.radius += dt * ex.growth;
+                    ex.mesh.scale.setScalar(ex.radius);
+                    ex.mesh.material.opacity = Math.max(0, ex.mesh.material.opacity - dt * ex.fade);
+                    ex.ttl -= dt;
+                    if (ex.ttl <= 0) { scene.remove(ex.mesh); ex.dead = true; }
+                }
+                explosions = explosions.filter(ex => !ex.dead);
+            }
+
+            function endGame() {
+                running = false;
+                ui.finalScore.textContent = score; ui.finalWave.textContent = wave;
+                ui.gameover.classList.add('visible');
+                ui.state.textContent = 'Game Over';
+            }
+
+            function animate() {
+                if (!running || paused) return;
+                const dt = Math.min(0.033, clock.getDelta());
+                updateDragon(dt);
+                updateMonsters(dt);
+                updateComets(dt);
+                updateShots(dt);
+                updateExplosions(dt);
+                composer.render();
+                requestAnimationFrame(animate);
+            }
+
+            // Initialize
+            init();
+        })();
+    </script>
+</body>
+
+</html>
