@@ -32,12 +32,13 @@ A professional, modern, and fully responsive static website serving as comprehen
     - Workflow automation (Snakemake example)  
 
 ## 📁 File Structure
-
+```text
 bulk-rnaseq-notes/
 ├── index.html     # Single-page application containing the full pipeline
 ├── style.css      # Custom dark theme, responsive layout, and visual enhancements
 ├── script.js      # Interactivity: copy code, sidebar, smooth scroll, scroll spy
-└── README.md      # This documentation fil
+└── README.md      # This documentation file
+```
 
 
 ## 🚀 How to Use
