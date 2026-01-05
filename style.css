@@ -1,0 +1,317 @@
+:root {
+    --bg-gradient-start: #0f0c29;
+    --bg-gradient-mid: #302b63;
+    --bg-gradient-end: #24243e;
+    --accent: #00bfff;
+    --accent-hover: #00ffff;
+    --text: #e0e0ff;
+    --card-bg: rgba(20, 20, 40, 0.6);
+    --code-bg: #1e1e3f;
+    --border: #44497a;
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+    color: var(--text);
+    font-family: 'Roboto', sans-serif;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    padding-top: 80px;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="10" cy="10" r="0.5" fill="%23fff" opacity="0.4"/%3E%3Ccircle cx="30" cy="50" r="0.3" fill="%23fff" opacity="0.3"/%3E%3Ccircle cx="70" cy="20" r="0.4" fill="%23fff" opacity="0.5"/%3E%3Ccircle cx="90" cy="80" r="0.2" fill="%23fff" opacity="0.6"/%3E%3Ccircle cx="50" cy="90" r="0.5" fill="%23fff" opacity="0.4"/%3E%3C/svg%3E') repeat;
+    background-size: 150px 150px;
+    animation: stars 60s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes stars {
+    from {
+        transform: translate(0, 0);
+    }
+
+    to {
+        transform: translate(-50px, -50px);
+    }
+}
+
+.navbar {
+    background: rgba(10, 10, 30, 0.9) !important;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+}
+
+.navbar-brand,
+.nav-link,
+.dropdown-item {
+    color: white !important;
+    font-weight: 500;
+}
+
+.nav-link:hover,
+.dropdown-item:hover {
+    color: var(--accent-hover) !important;
+}
+
+.dropdown-menu {
+    background: rgba(20, 20, 40, 0.95);
+    border: 1px solid var(--border);
+}
+
+.pipeline-section {
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 30px 0;
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.pipeline-section:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+h2 {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 12px;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: transparent;
+    border: none;
+}
+
+.card-header {
+    background: rgba(0, 191, 255, 0.15);
+    border: 1px solid var(--accent);
+    border-radius: 10px !important;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.card-header:hover {
+    background: rgba(0, 191, 255, 0.25);
+}
+
+.card-header h5 {
+    color: white;
+    font-weight: 500;
+}
+
+.code-block {
+    position: relative;
+    background: var(--code-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin: 20px 0;
+}
+
+.code-block pre {
+    margin: 0;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.code-block code {
+    color: #ff69b4;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--accent);
+    color: black;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.copy-btn:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+}
+
+.copy-btn.copied {
+    background: #28a745;
+    color: white;
+}
+
+.styled-table {
+    width: 100%;
+    background: var(--card-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    margin: 25px 0;
+}
+
+.styled-table th {
+    background: var(--accent);
+    color: black;
+    font-weight: 600;
+}
+
+.styled-table tr:nth-child(even) {
+    background: rgba(0, 191, 255, 0.08);
+}
+
+.styled-table td,
+.styled-table th {
+    padding: 12px;
+}
+
+.example-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 30px auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--accent);
+    transition: all 0.4s ease;
+}
+
+.example-img:hover {
+    transform: scale(1.04);
+    box-shadow: 0 20px 50px rgba(0, 191, 255, 0.5);
+}
+
+.img-caption {
+    text-align: center;
+    font-style: italic;
+    color: #b0d0ff;
+    margin-top: 12px;
+    font-size: 0.95rem;
+}
+
+.tip {
+    font-style: italic;
+    color: #b0d0ff;
+    background: rgba(0, 191, 255, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent);
+    margin-top: 20px;
+}
+
+.floating-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: var(--accent);
+    color: black;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    box-shadow: 0 8px 25px rgba(0, 191, 255, 0.4);
+    z-index: 1000;
+    transition: 0.3s;
+}
+
+.floating-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-5px);
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100%;
+    background: rgba(15, 15, 40, 0.95);
+    backdrop-filter: blur(10px);
+    border-left: 1px solid var(--border);
+    transition: right 0.4s ease;
+    z-index: 1050;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+}
+
+.sidebar.open {
+    right: 0;
+}
+
+.sidebar-header {
+    padding: 25px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-header h4 {
+    color: var(--accent);
+    margin: 0;
+}
+
+.closebtn {
+    font-size: 36px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+.sidebar-links a {
+    display: block;
+    padding: 16px 25px;
+    color: var(--text);
+    text-decoration: none;
+    transition: 0.3s;
+    border-left: 4px solid transparent;
+}
+
+.sidebar-links a:hover,
+.sidebar-links a.active {
+    background: rgba(0, 191, 255, 0.2);
+    color: var(--accent-hover);
+    border-left-color: var(--accent);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+    z-index: 1040;
+}
+
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 768px) {
+    .pipeline-section {
+        padding: 25px;
+    }
+}

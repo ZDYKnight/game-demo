@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Your Name">
+    <meta name="description" content="Bulk RNA-seq Analysis Notes - Professional Guide for Scientific Publication">
+    <title>Bulk RNA-seq Pipeline | Learning Notes</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-dna me-2"></i>Bulk RNA-seq</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#rnaQC">Quality Control</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rnaAlign">Alignment</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rnaQuant">Quantification</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna01">Load Data</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna02">DEG Analysis</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna03">PPI Networks</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna04">KEGG Pathway</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna05">GO Enrichment</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna06">Visualization</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rna07">Publication</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Advanced</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#rnaAdv01">Batch Correction</a></li>
+                            <li><a class="dropdown-item" href="#rnaAdv02">Functional Integration</a></li>
+                            <li><a class="dropdown-item" href="#rnaAdv03">Tools & Reproducibility</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container main-content">
+
+        <!-- Quality Control -->
+        <section id="rnaQC" class="pipeline-section">
+            <h2>Quality Control (QC)</h2>
+            <p>Assess raw FASTQ files using FastQC and MultiQC. Check for adapters, quality scores, and GC bias. For
+                publication, report QC metrics and thresholds used (e.g., Phred >30).</p>
+            <div class="accordion" id="accordionQC">
+                <div class="card">
+                    <div class="card-header" id="headingQC" data-bs-toggle="collapse" data-bs-target="#collapseQC">
+                        <h5 class="mb-0">FastQC Command <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapseQC" class="collapse show" data-bs-parent="#accordionQC">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code># Run FastQC on raw reads
+fastqc -o qc_results/ raw_reads/*.fastq.gz
+# Aggregate with MultiQC for summary
+multiqc qc_results/ -o multiqc_report/</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <p class="tip">Best practice: Archive QC reports in supplementary materials for
+                                reproducibility.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Threshold for Publication</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Per Base Quality</td>
+                        <td>>28 across reads</td>
+                    </tr>
+                    <tr>
+                        <td>Adapter Content</td>
+                        <td>
+                            < 5%</td>
+                    </tr>
+                    <tr>
+                        <td>GC Content</td>
+                        <td>Matches expected for species</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Alignment -->
+        <section id="rnaAlign" class="pipeline-section">
+            <h2>Alignment</h2>
+            <p>Align trimmed reads to reference genome using STAR (splice-aware). For human, use GRCh38. Report
+                alignment rates (>80% unique) in methods section.</p>
+            <div class="accordion" id="accordionAlign">
+                <div class="card">
+                    <div class="card-header" id="headingAlign" data-bs-toggle="collapse"
+                        data-bs-target="#collapseAlign">
+                        <h5 class="mb-0">STAR Alignment <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapseAlign" class="collapse show" data-bs-parent="#accordionAlign">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code># Build index if needed
+STAR --runThreadN 16 --runMode genomeGenerate --genomeDir genome_index/ --genomeFastaFiles ref.fa --sjdbGTFfile annot.gtf
+# Align reads
+STAR --runThreadN 16 --genomeDir genome_index/ --readFilesIn trimmed_R1.fastq.gz trimmed_R2.fastq.gz --outFileNamePrefix aligned_ --outSAMtype BAM SortedByCoordinate</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <p class="tip">For publication: Use --quantMode GeneCounts for direct quantification.
+                                Validate with RNA-seq QC tools like RSeQC.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quantification -->
+        <section id="rnaQuant" class="pipeline-section">
+            <h2>Quantification</h2>
+            <p>Quantify gene/transcript expression using featureCounts or Salmon. Prefer Salmon for isoform-level in
+                complex analyses.</p>
+            <div class="accordion" id="accordionQuant">
+                <div class="card">
+                    <div class="card-header" id="headingQuant" data-bs-toggle="collapse"
+                        data-bs-target="#collapseQuant">
+                        <h5 class="mb-0">featureCounts Example <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapseQuant" class="collapse show" data-bs-parent="#accordionQuant">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code># Count reads per gene
+featureCounts -T 16 -a annot.gtf -o counts.txt aligned_*.bam -p -s 2  # For paired-end, stranded
+# Or use Salmon for quasi-mapping
+salmon quant -i transcriptome_index -l A -1 R1.fastq.gz -2 R2.fastq.gz -o quant_out/ --validateMappings</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <p class="tip">Publication tip: Report library type (stranded/unstranded) and use tximport
+                                to summarize to gene level for DESeq2.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reading Data -->
+        <section id="rna01" class="pipeline-section">
+            <h2>Reading Data</h2>
+            <p>Load count matrix and metadata. Filter low-count genes (e.g., >10 in >2 samples). For sci papers,
+                describe data filtering in methods.</p>
+            <div class="accordion" id="accordion01">
+                <div class="card">
+                    <div class="card-header" id="heading01" data-bs-toggle="collapse" data-bs-target="#collapse01">
+                        <h5 class="mb-0">Loading & Filtering <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapse01" class="collapse show" data-bs-parent="#accordion01">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>library(DESeq2)
+countData <- read.csv("counts.txt", row.names=1, sep="\t", skip=1)  # Skip featureCounts header
+colData <- read.csv("metadata.csv", row.names=1)
+colData$condition <- factor(colData$condition)
+dds <- DESeqDataSetFromMatrix(countData = countData, colData = colData, design = ~condition + batch)  # Include covariates
+keep <- rowSums(counts(dds) >= 10) >= min(table(colData$condition))  # Filter low counts
+dds <- dds[keep,]</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <img src="https://cdn.prod.website-files.com/61e5670dd964f730bc3722e9/64e8904013a7ef5af8c12cb3_image%20(11)%20(1).jpg"
+                                alt="Heatmap Example" class="example-img">
+                            <p class="img-caption">Variance-stabilized heatmap of top variable genes</p>
+                            <p class="tip">Publication: Use vst() for visualization to stabilize variance.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Filter</th>
+                        <th>Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Low Counts</td>
+                        <td>Reduce noise; report criteria</td>
+                    </tr>
+                    <tr>
+                        <td>Outliers</td>
+                        <td>Use PCA to detect; justify removal</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- DEG Analysis -->
+        <section id="rna02" class="pipeline-section">
+            <h2>Differential Expression Genes (DEG) Analysis</h2>
+            <p>Perform DE using DESeq2 with Wald test. Adjust for multiple testing (FDR <0.05). For papers, report model
+                    formula and contrasts.</p>
+                    <div class="accordion" id="accordion02">
+                        <div class="card">
+                            <div class="card-header" id="heading02" data-bs-toggle="collapse"
+                                data-bs-target="#collapse02">
+                                <h5 class="mb-0">Full DESeq2 Pipeline <i class="fas fa-chevron-down float-end"></i></h5>
+                            </div>
+                            <div id="collapse02" class="collapse show" data-bs-parent="#accordion02">
+                                <div class="card-body">
+                                    <div class="code-block">
+                                        <pre><code>dds <- DESeq(dds)  # Dispersion estimation and testing
+res <- results(dds, contrast=c("condition", "treated", "control"), alpha=0.05)  # FDR cutoff
+resLFC <- lfcShrink(dds, contrast=c("condition", "treated", "control"), type="apeglm")  # Shrinkage for low counts
+degs <- subset(resLFC, padj < 0.05 & abs(log2FoldChange) > 1)
+write.csv(as.data.frame(degs), "degs.csv")  # Export for downstream</code></pre>
+                                        <button class="copy-btn">Copy</button>
+                                    </div>
+                                    <img src="https://olvtools.com/rnaseq/volcano.png" alt="Volcano Plot"
+                                        class="example-img">
+                                    <p class="img-caption">Volcano plot highlighting significant DEGs</p>
+                                    <p class="tip">Best practice: Use IHW for independent hypothesis weighting if >10k
+                                        tests.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        </section>
+
+        <!-- PPI Networks -->
+        <section id="rna03" class="pipeline-section">
+            <h2>Protein-Protein Interaction (PPI) Networks</h2>
+            <p>Construct PPI from DEGs using STRING. Analyze with Cytoscape for modules. Report hub genes and enrichment
+                scores.</p>
+            <div class="accordion" id="accordion03">
+                <div class="card">
+                    <div class="card-header" id="heading03" data-bs-toggle="collapse" data-bs-target="#collapse03">
+                        <h5 class="mb-0">STRINGdb & igraph <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapse03" class="collapse show" data-bs-parent="#accordion03">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>library(STRINGdb)
+library(igraph)
+string_db <- STRINGdb$new(species=9606, score_threshold=700)  # High confidence
+mapped <- string_db$map(as.data.frame(rownames(degs)), "SYMBOL", removeUnmappedRows=TRUE)
+interactions <- string_db$get_interactions(mapped$STRING_id)
+g <- graph_from_data_frame(interactions[, c("from", "to")], directed=FALSE)
+clusters <- cluster_louvain(g)  # Module detection
+write_graph(g, "ppi_network.graphml")  # For Cytoscape import</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <img src="https://www.researchgate.net/publication/380321662/figure/fig4/AS:11431281240803888@1714788913178/Protein-Protein-Interaction-PPI-Network-A-Protein-interaction-network-diagram-based.png"
+                                alt="PPI Network" class="example-img">
+                            <p class="img-caption">High-confidence PPI network with functional modules</p>
+                            <p class="tip">Publication: Validate interactions with experimental data if possible; cite
+                                STRING version.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Interpretation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Degree</td>
+                        <td>Hub genes (>10 connections)</td>
+                    </tr>
+                    <tr>
+                        <td>Modularity</td>
+                        <td>Functional clusters</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- KEGG Pathway -->
+        <section id="rna04" class="pipeline-section">
+            <h2>KEGG Pathway Analysis</h2>
+            <p>Enrich DEGs in KEGG using over-representation or GSEA. Adjust p-values; visualize top pathways.</p>
+            <div class="accordion" id="accordion04">
+                <div class="card">
+                    <div class="card-header" id="heading04" data-bs-toggle="collapse" data-bs-target="#collapse04">
+                        <h5 class="mb-0">clusterProfiler KEGG <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapse04" class="collapse show" data-bs-parent="#accordion04">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>library(clusterProfiler)
+library(org.Hs.eg.db)
+entrez_ids <- bitr(rownames(degs), fromType="SYMBOL", toType="ENTREZID", OrgDb=org.Hs.eg.db)$ENTREZID
+kk <- enrichKEGG(gene=entrez_ids, organism="hsa", pvalueCutoff=0.05, qvalueCutoff=0.1)
+gse_kk <- gseKEGG(geneList=sort(degs$log2FoldChange, decreasing=TRUE), organism="hsa")  # GSEA alternative
+dotplot(kk, showCategory=20)
+cnetplot(kk, categorySize="pvalue")  # Network view</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <img src="https://www.researchgate.net/publication/336450785/figure/fig4/AS:11431281254339931@1719141180646/GO-and-KEGG-pathway-enrichment-analysis-A-Dot-plot-shows-the-up-regulated-GO-terms-FDR.tif"
+                                alt="KEGG Dot Plot" class="example-img">
+                            <p class="img-caption">Top enriched KEGG pathways (dot plot)</p>
+                            <p class="tip">For papers: Use GSEA for ranked lists; report NES and FDR.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GO Enrichment -->
+        <section id="rna05" class="pipeline-section">
+            <h2>Gene Ontology (GO) Enrichment</h2>
+            <p>Analyze BP, MF, CC ontologies. Use simplify() to reduce redundancy.</p>
+            <div class="accordion" id="accordion05">
+                <div class="card">
+                    <div class="card-header" id="heading05" data-bs-toggle="collapse" data-bs-target="#collapse05">
+                        <h5 class="mb-0">Advanced GO Analysis <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapse05" class="collapse show" data-bs-parent="#accordion05">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>ego_bp <- enrichGO(gene=entrez_ids, OrgDb=org.Hs.eg.db, ont="BP", pAdjustMethod="BH", qvalueCutoff=0.05)
+ego_mf <- enrichGO(gene=entrez_ids, OrgDb=org.Hs.eg.db, ont="MF", pAdjustMethod="BH")
+ego_cc <- enrichGO(gene=entrez_ids, OrgDb=org.Hs.eg.db, ont="CC", pAdjustMethod="BH")
+ego_sim <- simplify(ego_bp, cutoff=0.7)  # Reduce overlap
+barplot(ego_sim, showCategory=30)
+emapplot(ego_sim)  # Enrichment map</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <img src="https://www.researchgate.net/publication/377440916/figure/fig4/AS:11431281281192847@1727749107278/Gene-ontology-and-enrichment-analysis-a-Bar-plot-showing-enrichment-analysis-of-genes-b.png"
+                                alt="GO Bar Plot" class="example-img">
+                            <p class="img-caption">GO enrichment across biological processes</p>
+                            <p class="tip">Publication: Separate ontologies; discuss biological relevance in results.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visualization -->
+        <section id="rna06" class="pipeline-section">
+            <h2>Visualization Techniques</h2>
+            <p>Generate publication-quality figures: volcano, MA plots, heatmaps, pathway views.</p>
+            <div class="accordion" id="accordion06">
+                <div class="card">
+                    <div class="card-header" id="heading06" data-bs-toggle="collapse" data-bs-target="#collapse06">
+                        <h5 class="mb-0">Enhanced Visuals <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapse06" class="collapse show" data-bs-parent="#accordion06">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>library(EnhancedVolcano)
+library(pheatmap)
+vsd <- vst(dds, blind=FALSE)  # Variance stabilized
+EnhancedVolcano(resLFC, lab=rownames(resLFC), x='log2FoldChange', y='padj', pCutoff=0.05, FCcutoff=1)
+pheatmap(assay(vsd)[rownames(degs),], cluster_rows=TRUE, show_rownames=FALSE, annotation_col=colData[,c("condition","batch")])
+ggsave("volcano.png", width=10, height=8, dpi=300)  # High-res for publication</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <p class="tip">Tip: Use ggplot2 themes for clean aesthetics; include legends and scales.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Publication Best Practices -->
+        <section id="rna07" class="pipeline-section">
+            <h2>Publication Best Practices</h2>
+            <p>For sci papers: Ensure reproducibility with Docker/Snakemake workflows. Deposit data in GEO/SRA. Use
+                RMarkdown for reports.</p>
+            <div class="accordion" id="accordion07">
+                <div class="card">
+                    <div class="card-header" id="heading07" data-bs-toggle="collapse" data-bs-target="#collapse07">
+                        <h5 class="mb-0">Reproducible Workflow <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapse07" class="collapse show" data-bs-parent="#accordion07">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code># In RMarkdown header
+---
+title: "Bulk RNA-seq Analysis"
+output: html_document
+---
+# Install dependencies
+BiocManager::install(c("DESeq2", "clusterProfiler", "STRINGdb"))
+sessionInfo()  # Report versions
+# Full script here...</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <p class="tip">Report: GEO accession, code repo (GitHub), statistical power calculations.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced: Batch Correction -->
+        <section id="rnaAdv01" class="pipeline-section">
+            <h2>Batch Effect Correction</h2>
+            <p>Detect with PCA; correct using ComBat-seq or limma. Re-run DE post-correction.</p>
+            <div class="accordion" id="accordionAdv01">
+                <div class="card">
+                    <div class="card-header" id="headingAdv01" data-bs-toggle="collapse"
+                        data-bs-target="#collapseAdv01">
+                        <h5 class="mb-0">sva & limma <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapseAdv01" class="collapse show" data-bs-parent="#accordionAdv01">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>library(sva)
+library(limma)
+mod <- model.matrix(~condition, data=colData)
+mod0 <- model.matrix(~1, data=colData)
+svobj <- sva(counts(dds), mod, mod0)  # Estimate surrogates
+corrected <- removeBatchEffect(assay(dds), batch=colData$batch, covariates=svobj$sv)
+dds_corrected <- dds
+assay(dds_corrected) <- corrected</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                            <p class="tip">Publication: Show pre/post PCA plots in supplements.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced: Functional Integration -->
+        <section id="rnaAdv02" class="pipeline-section">
+            <h2>Functional Integration</h2>
+            <p>Integrate PPI, GO, KEGG with tools like gProfiler. Cross-validate findings.</p>
+            <div class="accordion" id="accordionAdv02">
+                <div class="card">
+                    <div class="card-header" id="headingAdv02" data-bs-toggle="collapse"
+                        data-bs-target="#collapseAdv02">
+                        <h5 class="mb-0">gProfiler Integration <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapseAdv02" class="collapse show" data-bs-parent="#accordionAdv02">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code>library(gprofiler2)
+gostres <- gost(query=rownames(degs), organism="hsapiens", sources=c("GO","KEGG","REAC"))
+publish_gosttable(gostres)  # Interactive table</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced: Tools & Reproducibility -->
+        <section id="rnaAdv03" class="pipeline-section">
+            <h2>Tools & Reproducibility</h2>
+            <p>Use Nextflow/Snakemake for pipelines. Tools: Bioconductor, Galaxy. Best: Version control all code.</p>
+            <div class="accordion" id="accordionAdv03">
+                <div class="card">
+                    <div class="card-header" id="headingAdv03" data-bs-toggle="collapse"
+                        data-bs-target="#collapseAdv03">
+                        <h5 class="mb-0">Snakemake Example <i class="fas fa-chevron-down float-end"></i></h5>
+                    </div>
+                    <div id="collapseAdv03" class="collapse show" data-bs-parent="#accordionAdv03">
+                        <div class="card-body">
+                            <div class="code-block">
+                                <pre><code># Snakefile
+rule all:
+    input: "degs.csv"
+rule fastqc:
+    input: "raw/{sample}.fastq.gz"
+    output: "qc/{sample}_fastqc.html"
+    shell: "fastqc {input} -o qc/"
+# Etc. for full pipeline</code></pre>
+                                <button class="copy-btn">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-5 mt-5">
+            <h2>Notice</h2>
+            <p>All this note is for testing the web development project, therefore, the code and results are not match,
+                but i will fix out as soon as possible.</p>
+            <p class="text-muted small">© 2026 Bulk RNA-seq Learning Notes — Professional & Publication-Ready</p>
+        </footer>
+    </main>
+
+    <!-- Floating Outline Button -->
+    <button id="openSidebarBtn" class="floating-btn">
+        <i class="fas fa-bars"></i> Outline
+    </button>
+
+    <!-- Sidebar -->
+    <div id="outlineSidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h4>Outline</h4>
+            <button class="closebtn">×</button>
+        </div>
+        <div class="sidebar-links">
+            <a href="#rnaQC" class="active"><i class="fas fa-vial me-2"></i>Quality Control</a>
+            <a href="#rnaAlign"><i class="fas fa-align-center me-2"></i>Alignment</a>
+            <a href="#rnaQuant"><i class="fas fa-calculator me-2"></i>Quantification</a>
+            <a href="#rna01"><i class="fas fa-file-import me-2"></i>Reading Data</a>
+            <a href="#rna02"><i class="fas fa-chart-bar me-2"></i>DEG Analysis</a>
+            <a href="#rna03"><i class="fas fa-network-wired me-2"></i>PPI Networks</a>
+            <a href="#rna04"><i class="fas fa-project-diagram me-2"></i>KEGG Pathway</a>
+            <a href="#rna05"><i class="fas fa-tags me-2"></i>GO Enrichment</a>
+            <a href="#rna06"><i class="fas fa-eye me-2"></i>Visualization</a>
+            <a href="#rna07"><i class="fas fa-file-alt me-2"></i>Publication Practices</a>
+            <hr>
+            <a href="#rnaAdv01"><i class="fas fa-sync me-2"></i>Batch Correction</a>
+            <a href="#rnaAdv02"><i class="fas fa-cogs me-2"></i>Functional Integration</a>
+            <a href="#rnaAdv03"><i class="fas fa-tools me-2"></i>Tools & Reproducibility</a>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
