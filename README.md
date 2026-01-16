@@ -1,5 +1,5 @@
 # Bulk RNA-seq Analysis Learning Notes
-<https://zdyknight.github.io/bulkRNA-tut/>
+<https://zackary-yy.github.io/bulkRNA-tut/>
 
 A professional, modern, and fully responsive static website serving as comprehensive learning notes for **Bulk RNA-seq data analysis**. This resource walks you through a complete, publication-ready pipeline—from raw FASTQ files to biologically meaningful insights.
 
